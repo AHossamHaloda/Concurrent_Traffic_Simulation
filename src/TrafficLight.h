@@ -9,19 +9,33 @@
 // forward declarations to avoid include cycle
 class Vehicle;
 
+enum TrafficLightPhase 
+{
+    red, 
+    green
+};
+
 
 // FP.3 Define a class „MessageQueue“ which has the public methods send and receive. 
 // Send should take an rvalue reference of type TrafficLightPhase whereas receive should return this type. 
 // Also, the class should define an std::dequeue called _queue, which stores objects of type TrafficLightPhase. 
 // Also, there should be an std::condition_variable as well as an std::mutex as private members. 
 
-template <class T>
+template <class Type>
 class MessageQueue
 {
 public:
+    MessageQueue(){
+        std::cout<<"MessageQueue Launched\n";
+    }
+
+    void send(Type &&message);
+    Type receive();
 
 private:
-    
+    std::mutex m_mutex;
+    std::condition_variable m_conditionVariable;
+    std::deque<Type> m_queue;
 };
 
 // FP.1 : Define a class „TrafficLight“ which is a child class of TrafficObject. 
@@ -30,14 +44,16 @@ private:
 // can be either „red“ or „green“. Also, add the private method „void cycleThroughPhases()“. 
 // Furthermore, there shall be the private member _currentPhase which can take „red“ or „green“ as its value. 
 
-class TrafficLight
+class TrafficLight : public TrafficObject
 {
 public:
     // constructor / desctructor
-
+    TrafficLight();
     // getters / setters
-
+    TrafficLightPhase getCurrentPhase();
     // typical behaviour methods
+    void waitForGreen();
+    void simulate();
 
 private:
     // typical behaviour methods
@@ -46,8 +62,13 @@ private:
     // and use it within the infinite loop to push each new TrafficLightPhase into it by calling 
     // send in conjunction with move semantics.
 
-    std::condition_variable _condition;
-    std::mutex _mutex;
+    void cycleThroughPhases();
+    // Message queu used to send and receive TrafficLightPhase
+    std::shared_ptr<MessageQueue<TrafficLightPhase>> m_sharedPtr_queue;
+
+    std::condition_variable m_conditionVariable;
+    std::mutex m_mutex;
+    TrafficLightPhase m_currentPhase;
 };
 
 #endif
